@@ -70,7 +70,7 @@ The following code is a simplified version of the code defining the UI:
 (defsc TodoList [_ props]
   {...}
   (dom/ul 
-    (map #((com/factory TodoItem) %) ; <1>
+    (map #((comp/factory TodoItem) %) ; <1>
          (:list/items props))))
 
 (defsc Root [_ props]
