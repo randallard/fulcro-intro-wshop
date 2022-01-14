@@ -70,7 +70,7 @@ The following code is a simplified version of the code defining the UI:
 (defsc TodoList [_ props]
   {...}
   (dom/ul 
-    (map #((com/factory TodoItem) %) ; <1>
+    (map #((comp/factory TodoItem) %) ; <1>
          (:list/items props))))
 
 (defsc Root [_ props]
@@ -142,7 +142,7 @@ Now https://github.com/holyjak/fulcro-intro-wshop/blob/6a06c8881696ff2225be3502d
 5. In `ui.cljs`, under _Exercise 3.5_, evaluate the form `(binding ...)` and explore the output in Shadow Inspect (no _Pretty-Print_ available :( )
  * The output is a string and thus displayed in a single line, making it hard to read. Fortunately you only need to notice the metadata maps `^{...}` preceding some query vectors
 
-[#eql-primer]**EQL Primer**: An EQL query includes 1) _properties_ (a.k.a. attributes) such as `:list/label`, 2) _joins_ of the form `{<property or ident> <query>}`, 3) _idents_ such as `[:item/id 1]` to ask for the data of the entity with that ident (and we can again use a join to precise what data).
+[#eql-primer]**EQL Primer**: An EQL query includes 1) _properties_ (a.k.a. attributes) such as `:list/label`, 2) _joins_ of the form `{<property or ident> <query>}`, 3) _idents_ such as `[:item/id 1]` to ask for the data of the entity with that ident (and we can again use a join to specify what data).
 
 LESSON: Components declare their data needs using `:query`, listing the properties they want. They _join_ in the query of each child using `get-query` to include the child's needs and thus to specify what properties of a nested data entity to include. The query also includes metadata that Fulcro needs for its processing.
 
