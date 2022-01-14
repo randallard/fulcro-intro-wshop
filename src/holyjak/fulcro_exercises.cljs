@@ -42,7 +42,7 @@
       (div
         (h1 "Welcome to Fulcro exercises!")
         (p "This is an example what an exercise looks like while you work on it.")
-        (p "Just comment this exercises out as describe in the code comment above and go on to the next.")))
+        (p "Just comment this exercise out, as described in the code comment above, and go on to the next.")))
 
     (config-and-render! Root00)
     ,))
