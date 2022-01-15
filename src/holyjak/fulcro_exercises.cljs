@@ -62,7 +62,7 @@
 
     nil))
 
-(do ;comment ; 1 "Hard-coded DOM"
+(comment ; 1 "Hard-coded DOM"
   (do
     ;; TASK:
     ;; Complete the body of the Root1 component to render the following html:
@@ -92,7 +92,7 @@
 
     (config-and-render! Root1)))
 
-(comment ; 2 "Extracting a child component"
+(do ;comment ; 2 "Extracting a child component"
   (do
     ;; TASK:
     ;; Refactor the previous solution by moving the `<li>` into a separate
@@ -111,9 +111,17 @@
     (def value-proposition-points
       [{:proposition/label "Malleable"} {:proposition/label "Full-stack"} {:proposition/label "Well-designed"}])
 
+    (defsc ValuePropositionPoint [this {:proposition/keys [label]}]
+      (dom/li label))
+    
+    (def ui-value-proposition-point (comp/factory ValuePropositionPoint {:keyfn :proposition/label}))
+
     (defsc Root2 [_ _]
       {}
-      "TODO")
+      (dom/div
+       (dom/h1 :#title {:style {:textAlign "center"}} "Fulcro is:")
+       (dom/ul
+        (map ui-value-proposition-point value-proposition-points))))
 
     (config-and-render! Root2)
     ; (hint 2)
@@ -121,7 +129,7 @@
     ;; Task 2.b: Make sure you do not get the React error <<Each child in a list
     ;; should have a unique "key" prop.>> in the Chrome Console.
     ; (hint 2)
-    ,))
+    ))
 
 (comment ; 3 "Externalizing data"
   (do
