@@ -124,7 +124,7 @@
     ;(hint 2)
     ))
 
-(do ;comment ; 3 "Externalizing data"
+(comment ; 3 "Externalizing data"
   (do
     ;; TASK:
     ;; We still want to render the same HTML but this time we want to read the
@@ -137,32 +137,21 @@
     ;;
     ;; RESOURCES:
     ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_the_anatomy_of_a_fulcro_component_query_ident_body
-    (defsc ValuePropositionPoint [this {:proposition/keys [label]}]
-      {:query [:proposition/label]}
-      (dom/li label))
 
-    (def ui-value-proposition-point (comp/factory ValuePropositionPoint {:keyfn :proposition/label}))
 
-    (defsc Root3 [this {:page/keys [heading value-proposition-points]}]
-      {:query [:page/heading {:page/value-proposition-points (comp/get-query ValuePropositionPoint)}]}
-      (dom/div
-       (dom/h1 :#title {:style {:textAlign "center"}} heading)
-       (dom/ul
-        (map ui-value-proposition-point value-proposition-points))))
-
-    (config-and-render!
-     Root3
-     {:initial-db
+    ;(config-and-render!
+    ; Root3
+    ; {:initial-db
        ;; NOTE: Normally the initial-db we pass here should be already normalized but
        ;; since we do not care about normalization and are happy with denormalized data
        ;; in this exercise, it is OK to pass in the data tree as-is.
        ;; BEWARE: The initial data is only processed at app initialization, i.e.
        ;; not after hot-reloading of a code change
-      {:page/heading "<3> Fulcro is:"
-       :page/value-proposition-points
-       [{:proposition/label "Malleable"}
-        {:proposition/label "Full-stack"}
-        {:proposition/label "Well-designed"}]}})
+    ;  {:page/heading "<3> Fulcro is:"
+    ;   :page/value-proposition-points
+    ;   [{:proposition/label "Malleable"}
+    ;    {:proposition/label "Full-stack"}
+    ;    {:proposition/label "Well-designed"}]}})
     
     ;(show-client-db)
 
@@ -171,7 +160,7 @@
     ;;      Also try to use the provided `(show-client-db)` function for that.
     ))
 
-(comment ; 4 "Insert data into the client DB with merge/merge!"
+(do ;comment ; 4 "Insert data into the client DB with merge/merge!"
   (do
     ;; TASK:
     ;; Again we build on the previous solution but instead of inserting the data
@@ -188,18 +177,34 @@
     ;;   is relevant because merge! behaves very similary to merge-component! - the difference is that it works for the Root instead of
     ;;   some child component and it takes a query instead of a component (because it doesn't need an ident)
     ;; - merge! docs: https://book.fulcrologic.com/#_using_com_fulcrologic_fulcro_componentsmerge
-    (defsc Root4 [_ _]
-      {}
-      "TODO")
+    (defsc ValuePropositionPoint [this {:proposition/keys [label]}]
+      {:query [:proposition/label]}
+      (dom/li label))
+
+    (def ui-value-proposition-point (comp/factory ValuePropositionPoint {:keyfn :proposition/label}))
+
+    (defsc Root4 [this {:page/keys [heading value-proposition-points]}]
+      {:query [:page/heading {:page/value-proposition-points (comp/get-query ValuePropositionPoint)}]}
+      (dom/div
+       (dom/h1 :#title {:style {:textAlign "center"}} heading)
+       (dom/ul
+        (map ui-value-proposition-point value-proposition-points))))
+
 
     (def app4 (config-and-render! Root4))
 
     ;; What do you think the client DB will look like? Think, write it down, then check it
     ;; using Fulcro Inspect - DB (or `(show-client-db)`)
-    (merge/merge! app4 nil nil) ; TODO Implement
+    (merge/merge! app4
+                  {:page/heading "<4> Fulcro is:"
+                   :page/value-proposition-points
+                   [{:proposition/label "Malleable"}
+                    {:proposition/label "Full-stack"}
+                    {:proposition/label "Well-designed"}]}
+                  (comp/get-query Root4)) ; TODO Implement
     ; (hint 4)
     ; (hint 4)
-    ,))
+    ))
 
 (comment ; 5 "Normalization and merge! and merge-component!"
   (do
