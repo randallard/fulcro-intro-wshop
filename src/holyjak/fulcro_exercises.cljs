@@ -160,7 +160,7 @@
     ;;      Also try to use the provided `(show-client-db)` function for that.
     ))
 
-(do ;comment ; 4 "Insert data into the client DB with merge/merge!"
+(comment ; 4 "Insert data into the client DB with merge/merge!"
   (do
     ;; TASK:
     ;; Again we build on the previous solution but instead of inserting the data
@@ -206,7 +206,7 @@
     ; (hint 4)
     ))
 
-(comment ; 5 "Normalization and merge! and merge-component!"
+(do ;comment ; 5 "Normalization and merge! and merge-component!"
   (do
     ;; TASK:
     ;; Let's see how to insert data into the client DB for our UI to display!
@@ -232,24 +232,27 @@
     ;;   + https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_targeting_adding_references_to_the_new_data_to_existing_entities
     ;; - https://book.fulcrologic.com/#_using_mergemerge_component
     (defsc Address [_ {city :address/city}]
-      {:query [:address/city]}
+      {:query [:address/city]
+       :ident :address/city}
       (p "City: " city))
 
     (defsc Player [_ {:player/keys [name address]}]
-      {:query [:player/id :player/name :player/address]}
+      {:query [:player/id :player/name {:player/address (comp/get-query Address)}]
+       :ident :player/id}
       (li "name: " name " lives at: " ((comp/factory Address) address)))
 
     (def ui-player (comp/factory Player {:keyfn :player/id}))
 
-    (defsc Team [_ {:team/keys [name players]}]
-      {:query [:team/id :team/name :team/players]}
+    (defsc Team [_ {:team/keys [id name players]}]
+      {:query [:team/id :team/name {:team/players (comp/get-query Player)}]
+       :ident :team/id}
       (div (h2 "Team " name ":")
            (ol (map ui-player players))))
 
     (def ui-team (comp/factory Team {:keyfn :team/id}))
 
     (defsc Root5 [_ {teams :teams}]
-      {:query [:teams]} ; NOTE: This is on purpose incomplete
+      {:query [{:teams (comp/get-query Team)}]} 
       (div
         (h1 "Teams")
         (p "Debug: teams = " (dom/code (pr-str teams)))
@@ -267,7 +270,13 @@
     ;; Now:
     ;; 1. Uncomment, complete, and run the merge/merge! call below to insert the data-tree into
     ;;    the client DB. Check the UI shows it.
-    (comment (merge/merge! ...))
+    ;(comment )
+    ; (merge/merge! app5 data-tree (comp/get-query Root5))
+    (merge/merge-component! app5 
+                            Team 
+                            (-> data-tree :teams first) 
+                            :append [:teams])
+    ; 
     ; (hint 5)
     ; (hint 5)
 
@@ -284,7 +293,8 @@
     ;;    Is something wrong with our queries?! (Hint: yes, it is)
     ;;    Fix it and try again!
     ;;    Tip: force-reload the page to clean the client DB
-    ; (hint 5)
+    ; 
+    (hint 5)
 
     ;; 4. Rewrite the code to use merge/merge-component! instead.
     ;;    What is the correct target component? How to make sure the data looks
