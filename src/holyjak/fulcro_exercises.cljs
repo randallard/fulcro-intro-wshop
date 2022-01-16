@@ -92,7 +92,7 @@
 
     (config-and-render! Root1)))
 
-(do ;comment ; 2 "Extracting a child component"
+(comment ; 2 "Extracting a child component"
   (do
     ;; TASK:
     ;; Refactor the previous solution by moving the `<li>` into a separate
@@ -108,30 +108,23 @@
     ;;
     ;; RESOURCES:
     ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_the_anatomy_of_a_fulcro_component_query_ident_body
-    (def value-proposition-points
-      [{:proposition/label "Malleable"} {:proposition/label "Full-stack"} {:proposition/label "Well-designed"}])
 
-    (defsc ValuePropositionPoint [this {:proposition/keys [label]}]
-      (dom/li label))
-    
-    (def ui-value-proposition-point (comp/factory ValuePropositionPoint {:keyfn :proposition/label}))
+    ;(defsc Root2 [_ _]
+    ;  {}
+    ;  (dom/div
+    ;   (dom/h1 :#title {:style {:textAlign "center"}} "Fulcro is:")
+    ;   (dom/ul
+    ;    (map ui-value-proposition-point value-proposition-points))))
 
-    (defsc Root2 [_ _]
-      {}
-      (dom/div
-       (dom/h1 :#title {:style {:textAlign "center"}} "Fulcro is:")
-       (dom/ul
-        (map ui-value-proposition-point value-proposition-points))))
-
-    (config-and-render! Root2)
-    ; (hint 2)
+    ; (config-and-render! Root2)
+    ;(hint 2)
 
     ;; Task 2.b: Make sure you do not get the React error <<Each child in a list
     ;; should have a unique "key" prop.>> in the Chrome Console.
-    ; (hint 2)
+    ;(hint 2)
     ))
 
-(comment ; 3 "Externalizing data"
+(do ;comment ; 3 "Externalizing data"
   (do
     ;; TASK:
     ;; We still want to render the same HTML but this time we want to read the
@@ -144,28 +137,39 @@
     ;;
     ;; RESOURCES:
     ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_the_anatomy_of_a_fulcro_component_query_ident_body
-    (defsc Root3 [_ _]
-      {}
-      "TODO")
+    (defsc ValuePropositionPoint [this {:proposition/keys [label]}]
+      {:query [:proposition/label]}
+      (dom/li label))
+
+    (def ui-value-proposition-point (comp/factory ValuePropositionPoint {:keyfn :proposition/label}))
+
+    (defsc Root3 [this {:page/keys [heading value-proposition-points]}]
+      {:query [:page/heading {:page/value-proposition-points (comp/get-query ValuePropositionPoint)}]}
+      (dom/div
+       (dom/h1 :#title {:style {:textAlign "center"}} heading)
+       (dom/ul
+        (map ui-value-proposition-point value-proposition-points))))
 
     (config-and-render!
-      Root3
-      {:initial-db
+     Root3
+     {:initial-db
        ;; NOTE: Normally the initial-db we pass here should be already normalized but
        ;; since we do not care about normalization and are happy with denormalized data
        ;; in this exercise, it is OK to pass in the data tree as-is.
        ;; BEWARE: The initial data is only processed at app initialization, i.e.
        ;; not after hot-reloading of a code change
-       {:page/heading "<3> Fulcro is:"
-        :page/value-proposition-points
-                      [{:proposition/label "Malleable"}
-                       {:proposition/label "Full-stack"}
-                       {:proposition/label "Well-designed"}]}})
+      {:page/heading "<3> Fulcro is:"
+       :page/value-proposition-points
+       [{:proposition/label "Malleable"}
+        {:proposition/label "Full-stack"}
+        {:proposition/label "Well-designed"}]}})
+    
+    ;(show-client-db)
 
     ;(hint 3)
     ;; Tip: Use Fulcro Inspect to see the content of the client DB
     ;;      Also try to use the provided `(show-client-db)` function for that.
-    ,))
+    ))
 
 (comment ; 4 "Insert data into the client DB with merge/merge!"
   (do
