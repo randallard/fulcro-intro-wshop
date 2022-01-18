@@ -32,36 +32,6 @@
 
 (defn init [])
 
-;; ### TODO: Read the namespace docstring for instructions how to work with the exercises ###
-
-(comment
-  (do
-    ;; TASK 0.0: Comment this out by replacing the `(do; comment` above with `(comment` and go on to the next exercise.
-    ;; LEARNING OBJECTIVES: Get familiar with switching from an exercise to another.
-    (defsc Root00 [_ _]
-      (div
-        (h1 "Welcome to Fulcro exercises!")
-        (p "This is an example what an exercise looks like while you work on it.")
-        (p "Just comment this exercise out, as described in the code comment above, and go on to the next.")))
-
-    (config-and-render! Root00)
-    ,))
-
-(comment ; 0 "Try it out!"
-  (do
-    ;; LEARNING OBJECTIVES: Get familiar with switching to a new exercise and using the hints.
-    (defsc Root0 [_ _]
-      (h1 "Hello, I am a Fulcro app from the exercise 0!"))
-
-    (config-and-render! Root0)
-
-    (comment ; try running the hint fn 3 times!
-      (hint 0)
-      (hint 0)
-      (hint 0))
-
-    nil))
-
 (do ;comment ; 6 Client-side mutations
   (do
     ;; TASK:
@@ -109,14 +79,41 @@
                   [_ player-id]           players]
               [player-id team-id])))
 
+    ; (->> (app/current-state app6) :team/id vals make-player->team)
+    ; did it with :onClick #(m/toggle! this :ui/checked?)
+    (defn set-player-checked*
+      [new-value state-map id]
+      (assoc-in state-map [:player/id id :ui/checked?] new-value))
+
+    (defmutation set-players-checked
+      ; {:players [id] :value (not checked?)}
+      [{:keys [players value]}]
+      (action [{:keys [state]}]
+              (swap! state #(reduce (partial set-player-checked* value) % players))))
+
+    (defn delete-selected* [{player-map :player/id :as state-map}]
+      (let [player->team (make-player->team (-> state-map :team/id vals))
+            selected-player-ids (->> player-map
+                                     vals
+                                     (filter :ui/checked?)
+                                     (map :player/id))]
+        (reduce
+         norm/remove-entity
+         state-map
+         (map #(vector :player/id %) selected-player-ids))))
+
+    (defmutation delete-selected [_]
+      (action [{:keys [state]}]
+              (swap! state delete-selected*)))
+
     (defsc Player [this {:keys [player/id player/name ui/checked?]}]
       {:query [:player/id :player/name :ui/checked?]
        :ident :player/id}
       (li
-        (input {:type    "checkbox"
-                :checked (boolean checked?)
-                :onClick #(println "TODO: trigger the mutation `(set-players-checked {:players [id] :value (not checked?)})`")})
-        name))
+       (input {:type    "checkbox"
+               :checked (boolean checked?)
+               :onClick #(transact! this [(set-players-checked {:players [id] :value (not checked?)})])})
+       name))
 
     (def ui-player (comp/factory Player {:keyfn :player/id}))
 
@@ -127,7 +124,7 @@
         (div (h2 "Team " name ":")
              (label (input {:type    "checkbox"
                             :checked all-checked?
-                            :onClick #(println "TODO: trigger the mutation `(set-players-checked {:players (map :player/id players) :value (not all-checked?)})`")})
+                            :onClick #(transact! this [(set-players-checked {:players (map :player/id players) :value (not all-checked?)})])})
                     "Select all")
              (ol (map ui-player players)))))
 
@@ -136,24 +133,22 @@
     (defsc Root6 [this {teams :teams}]
       {:query [{:teams (comp/get-query Team)}]}
       (form
-        (h1 "Teams")
-        (button {:type "button"
-                 :onClick #(println "TODO: trigger the mutation `(delete-selected nil)`")}  ; TODO implement
-                "Delete selected")
-        (map ui-team teams)))
+       (h1 "Teams")
+       (button {:type "button"
+                :onClick #(transact! this [(delete-selected nil)])}
+               "Delete selected")
+       (map ui-team teams)))
 
     (def app6 (config-and-render! Root6))
 
     (run!
-      #(merge/merge-component! app6 Team % :append [:teams])
-      [#:team{:name "Explorers" :id :explorers
-              :players [#:player{:id 1 :name "Jo"}
-                        #:player{:id 2 :name "Ola"}
-                        #:player{:id 3 :name "Anne"}]}
-       #:team{:name "Bikers" :id :bikers
-              :players [#:player{:id 4 :name "Cyclotron"}]}])
-
-    ,))
+     #(merge/merge-component! app6 Team % :append [:teams])
+     [#:team{:name "Explorers" :id :explorers
+             :players [#:player{:id 1 :name "Jo"}
+                       #:player{:id 2 :name "Ola"}
+                       #:player{:id 3 :name "Anne"}]}
+      #:team{:name "Bikers" :id :bikers
+             :players [#:player{:id 4 :name "Cyclotron"}]}])))
 
 (comment ; 7 load!-ing data from a remote
   (do
