@@ -32,125 +32,7 @@
 
 (defn init [])
 
-(do ;comment ; 6 Client-side mutations
-  (do
-    ;; TASK:
-    ;; Enable the user to select individual elements or all at once
-    ;; and delete these from the Client DB. (No remote in this exercises.)
-    ;;
-    ;; Your task is thus to implement the mutations `set-players-checked` and `delete-selected`,
-    ;; and trigger them in the :onClick handlers below instead of the current `println`.
-    ;; Keep to the suggested inputs of those mutations, to make comparison easier.
-    ;;
-    ;; (Note: We could have structured the mutations in a simpler way. But this one
-    ;; provides you a sufficient challenge.)
-    ;;
-    ;; Tips:
-    ;; - It is often useful to put most mutation logic into a pure helper fn state-map -> state-map
-    ;;   (often with the same name but ending with *)
-    ;; - Get the current state-map via `(app/current-state app6)` to play with your code in the REPL
-    ;; - Use Fulcro Dev Tools to look at the database and Transactions
-    ;; - Check `(hint 6)` if you need help
-    ;;
-    ;; LEARNING OBJECTIVES:
-    ;; - React to user actions
-    ;; - Create and trigger a mutation
-    ;; - Use and manipulate the data in the Client DB
-    ;; - Understand the need for UI-only (`:ui/*`) props
-    ;; - Use Fulcro Inspect to explore the client DB and to troubleshoot transactions/mutations
-    ;;
-    ;; RESOURCES:
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_changing_global_data_and_performing_remote_calls_mutations
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#def-clientdb
-    ;; - Fulcro Inspect and its parts: https://blog.jakubholy.net/2020/troubleshooting-fulcro/#_know_your_tools
-
-    (defn make-player->team
-      "A helper function to create a 'lookup' so that we can easily find a player's team.
-      You might - or not :-) - find it useful in your mutations.
-
-      Take a seq of teams and look into their `:team/players` to construct the map
-      `player-id` -> `team-id`, useful to look up a player's team."
-      ;; To try it out:
-      ;; `(->> (app/current-state app6) :team/id vals make-player->team)`
-      [teams]
-      (into {}
-            (for [{team-id :team/id
-                   players :team/players} teams
-                  [_ player-id]           players]
-              [player-id team-id])))
-
-    ; (->> (app/current-state app6) :team/id vals make-player->team)
-    ; did it with :onClick #(m/toggle! this :ui/checked?)
-    (defn set-player-checked*
-      [new-value state-map id]
-      (assoc-in state-map [:player/id id :ui/checked?] new-value))
-
-    (defmutation set-players-checked
-      ; {:players [id] :value (not checked?)}
-      [{:keys [players value]}]
-      (action [{:keys [state]}]
-              (swap! state #(reduce (partial set-player-checked* value) % players))))
-
-    (defn delete-selected* [{player-map :player/id :as state-map}]
-      (let [player->team (make-player->team (-> state-map :team/id vals))
-            selected-player-ids (->> player-map
-                                     vals
-                                     (filter :ui/checked?)
-                                     (map :player/id))]
-        (reduce
-         norm/remove-entity
-         state-map
-         (map #(vector :player/id %) selected-player-ids))))
-
-    (defmutation delete-selected [_]
-      (action [{:keys [state]}]
-              (swap! state delete-selected*)))
-
-    (defsc Player [this {:keys [player/id player/name ui/checked?]}]
-      {:query [:player/id :player/name :ui/checked?]
-       :ident :player/id}
-      (li
-       (input {:type    "checkbox"
-               :checked (boolean checked?)
-               :onClick #(transact! this [(set-players-checked {:players [id] :value (not checked?)})])})
-       name))
-
-    (def ui-player (comp/factory Player {:keyfn :player/id}))
-
-    (defsc Team [this {:team/keys [name players] checked? :ui/checked?}]
-      {:query [:team/id :team/name :ui/checked? {:team/players (comp/get-query Player)}]
-       :ident :team/id}
-      (let [all-checked? (and (seq players) (every? :ui/checked? players))]
-        (div (h2 "Team " name ":")
-             (label (input {:type    "checkbox"
-                            :checked all-checked?
-                            :onClick #(transact! this [(set-players-checked {:players (map :player/id players) :value (not all-checked?)})])})
-                    "Select all")
-             (ol (map ui-player players)))))
-
-    (def ui-team (comp/factory Team {:keyfn :team/id}))
-
-    (defsc Root6 [this {teams :teams}]
-      {:query [{:teams (comp/get-query Team)}]}
-      (form
-       (h1 "Teams")
-       (button {:type "button"
-                :onClick #(transact! this [(delete-selected nil)])}
-               "Delete selected")
-       (map ui-team teams)))
-
-    (def app6 (config-and-render! Root6))
-
-    (run!
-     #(merge/merge-component! app6 Team % :append [:teams])
-     [#:team{:name "Explorers" :id :explorers
-             :players [#:player{:id 1 :name "Jo"}
-                       #:player{:id 2 :name "Ola"}
-                       #:player{:id 3 :name "Anne"}]}
-      #:team{:name "Bikers" :id :bikers
-             :players [#:player{:id 4 :name "Cyclotron"}]}])))
-
-(comment ; 7 load!-ing data from a remote
+(do ;comment ; 7 load!-ing data from a remote
   (do
     ;; TASK:
     ;; Learn how to load! data and practice using Fulcro Inspect
@@ -229,7 +111,7 @@
     (def app7 (config-and-render! Root7 {:resolvers [address my-very-awesome-teams]}))
 
     ;; TODO: TASK 1 - use `df/load!` to load data from the my-very-awesome-teams
-    (println "TODO: df/load! should be invoked here...")
+    (df/load! app7 :teams ui-team)
     ;; (Remember `(hint 7)` when in need.)
     ;; Now check Fulcro Inspect - the Transactions and Network tabs and explore the load there.
     ;; In both, click on the corresponding line to display details below. In the load's details
