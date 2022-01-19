@@ -372,7 +372,7 @@
     ;; Learn how to load! data and practice using Fulcro Inspect
     ;; This is similar to #5 but with merge-component! replaced with load!
     ;; We now run a mock, in-browser server (with a real Pathom).
-    ;; Read on to find the task your should do.
+    ;; Read on to find the task you should do.
     ;;
     ;; LEARNING OBJECTIVES:
     ;; - Use load!, with targeting
