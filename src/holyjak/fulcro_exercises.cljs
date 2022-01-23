@@ -143,7 +143,7 @@
 
     ;; TODO: TASK 4 - use targeting to fix a mismatch between a resolver and the UI: in `Root7`, rename `:teams` to `:teams`; how
     ;;       do you need to change the load! for this to work as before?
-    ;;       Check in the Client DB that the changed data look as expected.
+    ;;       Check in the Client DB that the changed data looks as expected.
 
     ;; TODO: TASK 5 - Use Fulcro load markers to display "Loading..." instead of the content while loading the data (see Root7)
     ))
