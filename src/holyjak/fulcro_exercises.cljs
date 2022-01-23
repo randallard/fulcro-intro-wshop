@@ -78,27 +78,35 @@
       {:query [{:teams (comp/get-query Team)}]}
       (div
         ;; Code for task 2 (described further down) - un-comment and complete this code:
-        ;(button {:type "button"
-        ;         :onClick #(println "df/load! the data from here")} "Load data")
-        (let [loading? false] ; scaffolding for TASK 5
-          (cond
-            loading? (p "Loading...")
+       (button {:type "button"
+                :onClick #(df/load! this :teams ui-team)} "Load data")
+       (let [loading? false] ; scaffolding for TASK 5
+         (cond
+           loading? (p "Loading...")
             ;; ...
-            :else
-            (comp/fragment (h1 "Teams")
-                           (map ui-team teams))))))
+           :else
+           (comp/fragment (h1 "Teams")
+                          (map ui-team teams))))))
 
     ;; --- "Backend" resolvers to feed data to load! ---
     (defresolver my-very-awesome-teams [_ _] ; a global resolver
       {::pc/input  #{}
        ::pc/output [{:teams [:team/id :team/name
-                             {:team/players [:player/id :player/name 
-                                             ;; NOTE: We need this 👇 instead of just `:player/address` so that autocomplete
-                                             ;; in Fulcro Inspect - EQL understands this is address and can get to id, city
-                                             {:player/address [:address/id]}]}]}]}
-      {:teams [#:team{:name "Hikers" :id :hikers
-                      :players [#:player{:id 1 :name "Luna" :address {:address/id 1}}
-                                #:player{:id 2 :name "Sol" :address {:address/id 2}}]}]})
+                             {:team/players [:player/id]}]}]}
+      {:teams [{:team/id :hikers}]})
+
+    (defresolver team [_ {id :team/id}]
+      {::pc/input #{:team/id}
+       ::pc/output [:team/id :team/name :team/players]}
+      (case id
+        :hikers  #:team{:id :hikers :name "Hikers" :players [{:player/id 1} {:player/id 2}]}))
+
+    (defresolver player [_ {id :player/id}]
+      {::pc/input #{:player/id}
+       ::pc/output [:player/id :player/name :player/address]}
+      (case id
+        1 #:player{:id 1 :name "Luna" :address {:address/id 1}}
+        2 #:player{:id 2 :name "Sol"  :address {:address/id 2}}))
 
     (defresolver address [_ {id :address/id}] ; an ident resolver
       {::pc/input #{:address/id}
@@ -108,11 +116,12 @@
         2 #:address{:id 2 :city "Trondheim"}))
 
     ;; Render the app, with a backend using these resolvers
-    (def app7 (config-and-render! Root7 {:resolvers [address my-very-awesome-teams]}))
+    (def app7 (config-and-render! Root7 {:resolvers [address player team my-very-awesome-teams]}))
 
     ;; TODO: TASK 1 - use `df/load!` to load data from the my-very-awesome-teams
-    (df/load! app7 :teams ui-team)
+    ; (df/load! app7 :teams ui-team)
     ;; (Remember `(hint 7)` when in need.)
+     (hint 7)
     ;; Now check Fulcro Inspect - the Transactions and Network tabs and explore the load there.
     ;; In both, click on the corresponding line to display details below. In the load's details
     ;; in the Network tab, press the [Send to query] button to show it in the EQL tab.
@@ -126,13 +135,18 @@
     ;;       Then play with them using Fulcro Inspect's EQL tab - fetch just the name of a particular person; ask for
     ;;       a property that does not exist (and check both the EQL tab and the Inspect's Network tab) - what does it look like?
 
-    ;; TODO: TASK 4 - use targeting to fix a mismatch between a resolver and the UI: in `Root7`, rename `:teams` to `:all-teams`; how
+    ;; [{[:player/id 1] [:player/name :player/points {:player/address [:address/city]}]}]
+    ;; [{[:team/id :hikers] [:team/id :team/name]}]
+    ;; [{[:team/id :hikers] [:team/id :team/name :team/players]}]
+    ;; this runs but we lost the intellisense so ... probably not resolver something correctly
+    ;; [{[:team/id :hikers] [:team/id :team/name {:team/players [:player/id :player/name]}]}]
+
+    ;; TODO: TASK 4 - use targeting to fix a mismatch between a resolver and the UI: in `Root7`, rename `:teams` to `:teams`; how
     ;;       do you need to change the load! for this to work as before?
     ;;       Check in the Client DB that the changed data look as expected.
 
     ;; TODO: TASK 5 - Use Fulcro load markers to display "Loading..." instead of the content while loading the data (see Root7)
-
-    ,))
+    ))
 
 (comment ; 8 Fix the graph
   (do
