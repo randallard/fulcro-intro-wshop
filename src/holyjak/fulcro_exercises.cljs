@@ -74,15 +74,17 @@
 
     (def ui-team (comp/factory Team {:keyfn :team/id}))
 
-    (defsc Root7 [this {teams :teams :as props}]
-      {:query [{:teams (comp/get-query Team)}]}
+    (defsc Root7 [this {teams :all-teams :as props}]
+      {:query [{:all-teams (comp/get-query Team)} [df/marker-table :marker-id]]}
       (div
         ;; Code for task 2 (described further down) - un-comment and complete this code:
        (button {:type "button"
-                :onClick #(df/load! this :teams ui-team)} "Load data")
-       (let [loading? false] ; scaffolding for TASK 5
+                :onClick #(df/load! this :teams ui-team
+                                    {:marker :marker-id
+                                     :target (targeting/replace-at [:all-teams])})} "Load data")
+       (let [marker (get props [df/marker-table :marker-id])] ; scaffolding for TASK 5
          (cond
-           loading? (p "Loading...")
+           (df/loading? marker) (p "Loading...")
             ;; ...
            :else
            (comp/fragment (h1 "Teams")
@@ -138,6 +140,7 @@
     ;; [{[:player/id 1] [:player/name :player/points {:player/address [:address/city]}]}]
     ;; [{[:team/id :hikers] [:team/id :team/name]}]
     ;; [{[:team/id :hikers] [:team/id :team/name :team/players]}]
+
     ;; this runs but we lost the intellisense so ... probably not resolver something correctly
     ;; [{[:team/id :hikers] [:team/id :team/name {:team/players [:player/id :player/name]}]}]
 
