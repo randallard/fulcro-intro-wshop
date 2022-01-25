@@ -32,126 +32,7 @@
 
 (defn init [])
 
-(do ;comment ; 7 load!-ing data from a remote
-  (do
-    ;; TASK:
-    ;; Learn how to load! data and practice using Fulcro Inspect
-    ;; This is similar to #5 but with merge-component! replaced with load!
-    ;; We now run a mock, in-browser server (with a real Pathom).
-    ;; Read on to find the task you should do.
-    ;;
-    ;; LEARNING OBJECTIVES:
-    ;; - Use load!, with targeting
-    ;; - Create Pathom resolvers
-    ;; - Use the EQL and Network tabs of Fulcro Inspect
-    ;; - Use load markers to track the state of data loading
-    ;;
-    ;; RESOURCES:
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_loading_remote_data
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_targeting_adding_references_to_the_new_data_to_existing_entities
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_how_to
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_when_to_load
-    ;; - https://fulcro-community.github.io/guides/tutorial-minimalist-fulcro/#_bonus_tracking_loading_state_with_load_markers
-
-    ;; --- "Frontend" UI ---
-    (defsc Address [_ {city :address/city}]
-      {:query [:address/city]
-       :ident :address/city}
-      (p "City: " city))
-
-    (defsc Player [_ {:player/keys [name address]}]
-      {:query [:player/id :player/name {:player/address (comp/get-query Address)}]
-       :ident :player/id}
-      (li "Player: " name " lives at: " ((comp/factory Address) address)))
-
-    (def ui-player (comp/factory Player {:keyfn :player/id}))
-
-    (defsc Team [_ {:team/keys [name players]}]
-      {:query [:team/id :team/name {:team/players (comp/get-query Player)}]
-       :ident :team/id}
-      (div (h2 "Team " name ":")
-           (ol (map ui-player players))))
-
-    (def ui-team (comp/factory Team {:keyfn :team/id}))
-
-    (defsc Root7 [this {teams :all-teams :as props}]
-      {:query [{:all-teams (comp/get-query Team)} [df/marker-table :marker-id]]}
-      (div
-        ;; Code for task 2 (described further down) - un-comment and complete this code:
-       (button {:type "button"
-                :onClick #(df/load! this :teams ui-team
-                                    {:marker :marker-id
-                                     :target (targeting/replace-at [:all-teams])})} "Load data")
-       (let [marker (get props [df/marker-table :marker-id])] ; scaffolding for TASK 5
-         (cond
-           (df/loading? marker) (p "Loading...")
-            ;; ...
-           :else
-           (comp/fragment (h1 "Teams")
-                          (map ui-team teams))))))
-
-    ;; --- "Backend" resolvers to feed data to load! ---
-    (defresolver my-very-awesome-teams [_ _] ; a global resolver
-      {::pc/input  #{}
-       ::pc/output [{:teams [:team/id :team/name
-                             {:team/players [:player/id]}]}]}
-      {:teams [{:team/id :hikers}]})
-
-    (defresolver team [_ {id :team/id}]
-      {::pc/input #{:team/id}
-       ::pc/output [:team/id :team/name :team/players]}
-      (case id
-        :hikers  #:team{:id :hikers :name "Hikers" :players [{:player/id 1} {:player/id 2}]}))
-
-    (defresolver player [_ {id :player/id}]
-      {::pc/input #{:player/id}
-       ::pc/output [:player/id :player/name :player/address]}
-      (case id
-        1 #:player{:id 1 :name "Luna" :address {:address/id 1}}
-        2 #:player{:id 2 :name "Sol"  :address {:address/id 2}}))
-
-    (defresolver address [_ {id :address/id}] ; an ident resolver
-      {::pc/input #{:address/id}
-       ::pc/output [:address/id :address/city]}
-      (case id
-        1 #:address{:id 1 :city "Oslo"}
-        2 #:address{:id 2 :city "Trondheim"}))
-
-    ;; Render the app, with a backend using these resolvers
-    (def app7 (config-and-render! Root7 {:resolvers [address player team my-very-awesome-teams]}))
-
-    ;; TODO: TASK 1 - use `df/load!` to load data from the my-very-awesome-teams
-    ; (df/load! app7 :teams ui-team)
-    ;; (Remember `(hint 7)` when in need.)
-     (hint 7)
-    ;; Now check Fulcro Inspect - the Transactions and Network tabs and explore the load there.
-    ;; In both, click on the corresponding line to display details below. In the load's details
-    ;; in the Network tab, press the [Send to query] button to show it in the EQL tab.
-    ;; Run it from the EQL tab. Modify, run again.
-    ;; - EQL tab - do [(Re)load Pathom Index] to get auto-completion for the queries and try to type some
-    ;; - Index Explorer tab - do [Load index], explore the index (you might need to scroll up on the right side to see the selected thing)
-
-    ;; TODO: TASK 2 - replace loading data during initialization (above) with loading them on-demand, on the button click
-
-    ;; TODO: TASK 3 - split ident resolvers for a team and a player out of `my-very-awesome-teams`, as we did for address;
-    ;;       Then play with them using Fulcro Inspect's EQL tab - fetch just the name of a particular person; ask for
-    ;;       a property that does not exist (and check both the EQL tab and the Inspect's Network tab) - what does it look like?
-
-    ;; [{[:player/id 1] [:player/name :player/points {:player/address [:address/city]}]}]
-    ;; [{[:team/id :hikers] [:team/id :team/name]}]
-    ;; [{[:team/id :hikers] [:team/id :team/name :team/players]}]
-
-    ;; this runs but we lost the intellisense so ... probably not resolver something correctly
-    ;; [{[:team/id :hikers] [:team/id :team/name {:team/players [:player/id :player/name]}]}]
-
-    ;; TODO: TASK 4 - use targeting to fix a mismatch between a resolver and the UI: in `Root7`, rename `:teams` to `:teams`; how
-    ;;       do you need to change the load! for this to work as before?
-    ;;       Check in the Client DB that the changed data looks as expected.
-
-    ;; TODO: TASK 5 - Use Fulcro load markers to display "Loading..." instead of the content while loading the data (see Root7)
-    ))
-
-(comment ; 8 Fix the graph
+(do ;comment ; 8 Fix the graph
   (do
     ;; TASK:
     ;; Fix the code to actually show the list of cities.
@@ -170,7 +51,8 @@
     ;;
     (defsc Menu [this {:keys [cities selected-city]}]
       {:ident (fn [] [:component/id ::Menu])
-       :query [:cities :selected-city]}
+       :query [:cities :selected-city]
+       :initial-state {}}
       ;; Note: This is not a very good way of using a select :-) 
       (dom/select {:value (or selected-city "Select one:")
                    :onChange #(do (println "Selected city:" (.-value (.-target %)))
@@ -180,11 +62,12 @@
 
     (def ui-menu (comp/factory Menu))
 
-    (defsc Root8 [_ props]
-      {:query []}
+    (defsc Root8 [this {menu :menu :as props}]
+      {:query [{:menu (comp/get-query Menu)}]
+       :initial-state {:menu {}}}
       (dom/div
         (h1 "Select a city!")
-        (ui-menu {:TODO "fix this and other places"})))
+        (ui-menu menu)))
     
     (defresolver cities [_ _]
       {::pc/input #{}
@@ -197,7 +80,9 @@
     ;; We want to load :cities into the Menu component because it is the only
     ;; one needing the data (rather then polluting root with it and having to
     ;; use a Link Query)
-    (df/load! app8 :cities nil {:target (conj (comp/get-ident Menu {}) :cities)})
+    (df/load! app8 :cities nil {:target 
+                                (conj (comp/get-ident Menu {}) :cities)
+                                })
     ))
 
 ;; TODO Additional exercises:
